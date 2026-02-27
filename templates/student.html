@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📝 Мои заявки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+        .tab-btn.active {
+            background: #4a90e2;
+        }
+        .zayvka-card {
+            background: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            border-left: 5px solid;
+        }
+        .status-pending { border-left-color: #ffd700; }
+        .status-approved { border-left-color: #2ecc71; }
+        .status-rejected { border-left-color: #ff4757; }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9em;
+        }
+        .badge-pending { background: #ffd700; color: black; }
+        .badge-approved { background: #2ecc71; }
+        .badge-rejected { background: #ff4757; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="user-info">
+                <div class="user-avatar">{{ first_name[0]|upper }}</div>
+                <div>
+                    <h2>{{ first_name }} {{ last_name }}</h2>
+                    <small>{{ username }} | {{ email }}</small>
+                </div>
+            </div>
+            <a href="/logout" class="logout-btn">🚪 Выйти</a>
+        </div>
+
+        {% if message %}
+        <div class="success">{{ message }}</div>
+        {% endif %}
+
+        <h2>📋 Мои заявки</h2>
+        {% for z in zayvki %}
+        <div class="zayvka-card status-{{ z[11] }}">
+            <span class="status-badge badge-{{ z[11] }}">
+                {% if z[11] == 'pending' %}⏳ Ожидает
+                {% elif z[11] == 'approved' %}✅ Одобрена
+                {% elif z[11] == 'rejected' %}❌ Отклонена
+                {% endif %}
+
+
+            </span>
+                    <div style="margin-top:10px;">
+                <strong> ID: {{ z[1] }}</strong>
+            </div>
+
+
+            <div style="margin-top:10px;">
+                <strong>{{ z[9] }}</strong> - {{ z[7] }} {{ z[8] }} 
+            </div>
+            <small>Создано: {{ z[12] }}</small>
+        </div>
+        {% else %}
+        <p>У вас нет заявок</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

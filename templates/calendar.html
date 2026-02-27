@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>📅 Календарь</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .month-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .month-btn {
+            background: #4a90e2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+        }
+        .month-title {
+            font-size: 2em;
+            color: #ffd700;
+        }
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .calendar-table th {
+            background: #4a90e2;
+            color: white;
+            padding: 15px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .calendar-table td {
+            border: 1px solid rgba(255,255,255,0.2);
+            height: 100px;
+            width: 14.28%;
+            vertical-align: top;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            cursor: pointer;
+        }
+        .calendar-table td:hover {
+            background: rgba(74,144,226,0.3);
+        }
+        .day-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #a0c0ff;
+        }
+        .event-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 3px;
+        }
+        .event-dot.admin {
+            background: #ffd700;
+        }
+        .event-dot.student {
+            background: #2ecc71;
+        }
+        .event-item {
+            font-size: 0.8em;
+            padding: 2px 4px;
+            margin: 2px 0;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .event-item:hover {
+            background: #4a90e2;
+            color: white;
+        }
+        .event-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .event-detail {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .form-card {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0c0ff;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #2ecc71;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .role-badge {
+            background: #ffd700;
+            color: black;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .admin-link, .logout-btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .admin-link {
+            background: #ffd700;
+            color: black;
+        }
+        .logout-btn {
+            background: rgba(255,71,87,0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+
+
+    .theme-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 10px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+    
+/* СВЕТЛАЯ ТЕМА */
+body.light-theme {
+    background: linear-gradient(145deg, #f0f2f5 0%, #e6e9f0 100%);
+    color: #000000 !important;  /* ЧЁРНЫЙ ТЕКСТ */
+}
+
+body.light-theme .container {
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: #000000;
+}
+
+body.light-theme .header {
+    background: rgba(0,0,0,0.05);
+    color: #000000;
+}
+
+body.light-theme .user-info small {
+    color: #000000;
+}
+
+body.light-theme .stat-card {
+    background: rgba(0,0,0,0.05);
+    color: #000000;
+}
+
+body.light-theme .stat-number {
+    color: #ddc237;
+}
+
+body.light-theme .form-card h2,
+body.light-theme .form-card label {
+    color: #00a2ff !important;
+}
+
+body.light-theme input,
+body.light-theme textarea,
+body.light-theme select {
+    background: white;
+    color: #000000;
+    border: 1px solid #ccc;
+}
+
+body.light-theme .calendar-table th {
+    background: #4a90e2;
+    color: white;
+}
+
+body.light-theme .calendar-table td {
+    background: white;
+    border-color: #ddd;
+    color: #000000;
+}
+
+body.light-theme .day-number {
+    color: #4a90e2;
+}
+
+body.light-theme .event-item {
+    background: #f0f0f0;
+    color: #000000;
+    border: 1px solid #ddd;
+}
+
+body.light-theme .event-item:hover {
+    background: #4a90e2;
+    color: white;
+}
+
+body.light-theme .event-card {
+    background: white;
+    color: #000000;
+    border: 1px solid #ddd;
+}
+
+body.light-theme .event-card h3,
+body.light-theme .event-card p,
+body.light-theme .event-card small {
+    color: #000000;
+}
+
+body.light-theme .event-date {
+    color: #4a90e2;
+}
+
+body.light-theme .event-call {
+    color: #e24a4a;
+}
+
+body.light-theme .role-badge {
+    background: #ffd700;
+    color: black;
+}
+
+body.light-theme .admin-link {
+    background: #ffd700;
+    color: black;
+}
+
+body.light-theme .logout-btn {
+    background: rgba(255,71,87,0.2);
+    color: #ff4757;
+    border: 1px solid #ff4757;
+}
+
+body.light-theme .success {
+    background: rgba(46,204,113,0.2);
+    color: #2ecc71;
+}
+
+body.light-theme .warning {
+    background: rgba(255,215,0,0.2);
+    color: #856404;
+}
+
+body.light-theme .error {
+    color: #ff4757;
+}
+
+body.light-theme .month-title {
+    color: #4a90e2;
+}
+
+body.light-theme .month-btn {
+    background: #4a90e2;
+    color: white;
+}
+
+body.light-theme .theme-btn {
+    background: rgba(0,0,0,0.1);
+    color: #000000;
+    border: 1px solid #ccc;
+}
+
+body.light-theme .modal-content {
+    background: white;
+    color: #000000;
+    border: 1px solid #ddd;
+}
+
+body.light-theme .event-detail {
+    background: #f8f9fa;
+    color: #000000;
+}
+
+body.light-theme .event-detail p {
+    color: #000000;
+}
+
+body.light-theme .event-detail strong {
+    color: #4a90e2;
+}
+    
+    /* ПРОШЛЫЕ ДАТЫ */
+    .calendar-table td.past-date {
+        background: rgba(0,0,0,0.3);
+        opacity: 1;
+        cursor: not-allowed;
+    }
+    
+    body.light-theme .calendar-table td.past-date {
+        background: #e0e0e0;
+        opacity: 0.7;
+    }
+    
+    .calendar-table td.past-date:hover {
+        background: rgba(255,71,87,0.2);
+    }
+    
+    /* ТЕКУЩАЯ ДАТА */
+    .calendar-table td.today-date {
+        border: 2px solid #4a90e2;
+        background: rgba(74,144,226,0.2);
+    }
+    
+    body.light-theme .calendar-table td.today-date {
+        background: rgba(74,144,226,0.3);
+    }
+
+    </style>
+</head>
+<body>
+    <div id="eventModal" class="event-modal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+    <button onclick="toggleTheme()" class="theme-btn" id="themeToggle">🌙 Тёмная тема</button>
+</div>
+
+            <div class="user-info">
+                <div class="user-avatar">{{ first_name[0]|upper }}</div>
+                <div>
+                    <h2>{{ first_name }} {{ last_name }} 
+                        {% if role == 'admin' %}<span class="role-badge">👑 Админ</span>{% endif %}
+                    </h2>
+                    <small>{{ username }} | {{ email }}</small>
+                </div>
+            </div>
+            <div>
+                {% if role == 'admin' %}
+                <a href="/admin" class="admin-link">👑 Управление</a>
+                {% endif %}
+                <a href="/logout" class="logout-btn">🚪 Выйти</a>
+            </div>
+        </div>
+
+        {% if message %}<div class="success">{{ message }}</div>{% endif %}
+
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number">{{ events|length }}</div><div>Всего событий</div></div>
+            <div class="stat-card"><div class="stat-number">{{ my_events }}</div><div>Мои события</div></div>
+            <div class="stat-card"><div class="stat-number">{{ other_events }}</div><div>События других</div></div>
+        </div>
+
+        <div class="form-card">
+            <h2>➕ Добавить событие</h2>
+            <form method="POST" action="/add_event">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Дата</label>
+                        <input type="date" name="date" required value="{{ today }}" min="{{ today }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Время</label>
+                        <input type="time" name="time" value="12:00">
+                    </div>
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" name="title" required placeholder="Название">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea name="description" rows="3" placeholder="Описание..."></textarea>
+                </div>
+                <button type="submit">💾 Добавить</button>
+            </form>
+        </div>
+
+       <div class="calendar-header">
+    <div class="month-nav">
+        <a href="/calendar?month={{ prev_month }}&year={{ prev_year }}#calendar-top" class="month-btn">←</a>
+        <a href="/calendar?month={{ next_month }}&year={{ next_year }}#calendar-top" class="month-btn">→</a>
+    </div>
+    <div class="month-title">{{ month_name }} {{ year }}</div>
+    <div></div>
+</div>
+
+        <table class="calendar-table">
+    <thead>
+        <tr>
+            <th>Пн</th>
+            <th>Вт</th>
+            <th>Ср</th>
+            <th>Чт</th>
+            <th>Пт</th>
+            <th>Сб</th>
+            <th>Вс</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for week in calendar_grid %}
+        <tr>
+            {% for day in week %}
+            {% if day > 0 %}
+                {% set current_date = "%04d-%02d-%02d"|format(year, month, day) %}
+                {% set today_date = today %}
+                <td class="{% if current_date < today_date %}past-date{% endif %} {% if current_date == today_date %}today-date{% endif %}" 
+                    onclick="{% if current_date < today_date %}alert('Нельзя добавлять события в прошлом!'){% else %}quickAdd('{{ year }}-{{ month }}-{{ day }}'){% endif %}">
+                <div class="day-number">{{ day }}</div>
+                {% for event in day_events[day] %}
+                <div class="event-item" onclick="event.stopPropagation(); showEvent('{{ event.title|escape }}', '{{ event.description|escape }}', '{{ event.time }}', '{{ event.author }}', '{{ event.role }}')">
+                    <span class="event-dot {{ event.role }}"></span>
+                    {{ event.time }} {{ event.title }}
+                </div>
+                {% endfor %}
+            </td>
+            {% else %}
+            <td></td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+        <h2>📋 Список всех событий</h2>
+        <div class="events-grid">
+            {% for event in events %}
+            <div class="event-card">
+                {% if role == 'admin' or event[1] == user_id %}
+                <a href="/delete_event/{{ event[0] }}" class="delete-btn" onclick="return confirm('Удалить?')">✕</a>
+                {% endif %}
+                <div class="event-date"> 📅 {{ event[6] }}</div>
+                <div class="event-date"> ⌛ {{ event[7] }}</div>
+                <div class="event-call"> ❗ {{ event[8] }}</div>
+                <h3>{{ event[9] }}</h3>
+                <p>{{ event[10] or 'Нет описания' }}</p>
+                <small>✍️ {{ event[3] }} {{ event[4] }}{% if event[5] == 'admin' %} 👑{% endif %}</small>
+            </div>
+            {% else %}
+            <p>Нет событий</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function quickAdd(date) {
+    // Разбираем дату
+    const parts = date.split('-');
+    if (parts.length !== 3) {
+        alert('Ошибка: неправильный формат даты');
+        return;
+    }
+    
+    const year = parts[0];
+    const month = parts[1].padStart(2, '0');
+    const day = parts[2].padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    
+    // ПОЛУЧАЕМ СЕГОДНЯШНЮЮ ДАТУ (Московское время)
+    const today = new Date();
+    const moscowTime = new Date(today.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+    const todayStr = moscowTime.toISOString().split('T')[0];
+    
+    // ПРОВЕРЯЕМ, ЧТО ДАТА НЕ В ПРОШЛОМ
+    if (formattedDate < todayStr) {
+        alert('❌ Нельзя добавлять события в прошлом!');
+        return;
+    }
+    
+    const modal = document.getElementById('eventModal');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <h2 style="margin-bottom:20px;">📅 Быстрое добавление</h2>
+        <div style="margin-bottom:20px; padding:10px; background:#f0f8ff; border-radius:10px;">
+            <strong>Дата:</strong> ${formattedDate}
+        </div>
+        <form method="POST" action="/add_event" id="quickForm">
+            <input type="hidden" name="date" value="${formattedDate}">
+            <div class="form-group">
+                <label>Время</label>
+                <input type="time" name="time" value="12:00" style="width:100%; padding:10px; margin:5px 0;">
+            </div>
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" name="title" required placeholder="Название события" style="width:100%; padding:10px; margin:5px 0;">
+            </div>
+            <div class="form-group">
+                <label>Описание (необязательно)</label>
+                <textarea name="description" rows="2" placeholder="Краткое описание..." style="width:100%; padding:10px; margin:5px 0;"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="submit" style="flex:1; background:#2ecc71;">✅ Добавить</button>
+                <button type="button" onclick="document.getElementById('eventModal').style.display='none'" style="flex:1; background:#95a5a6;">Отмена</button>
+            </div>
+        </form>
+    `;
+    modal.style.display = 'flex';
+}
+
+        function showEvent(title, description, time, author, role) {
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <h2 style="margin-bottom:20px;">📅 ${title}</h2>
+                <div class="event-detail">
+                    <p><strong>⏰ Время:</strong> ${time}</p>
+                    <p><strong>👤 Автор:</strong> ${author} ${role == 'admin' ? '👑' : '👨‍🎓'}</p>
+                    <p><strong>📋 Описание:</strong> ${description || 'Нет описания'}</p>
+                </div>
+                <div style="text-align:right;">
+                    <button onclick="document.getElementById('eventModal').style.display='none'">Закрыть</button>
+                </div>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('eventModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+
+    {% if role != 'admin' %}
+    <script>
+        setInterval(function() {
+            fetch('/check_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_blocked) {
+                        window.location.href = '/blocked';
+                    }
+                })
+                .catch(err => console.log('Ошибка проверки статуса'));
+        }, 3000);
+    </script>
+    {% endif %}
+
+
+    <script>
+    // СОХРАНЯЕМ ПОЗИЦИЮ СКРОЛЛА ПЕРЕД УХОДОМ
+    document.querySelectorAll('.month-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // Сохраняем текущую позицию скролла в sessionStorage
+            sessionStorage.setItem('scrollPosition', window.scrollY);
+        });
+    });
+
+    // ВОССТАНАВЛИВАЕМ ПОЗИЦИЮ СКРОЛЛА ПОСЛЕ ЗАГРУЗКИ
+    window.addEventListener('load', function() {
+        const savedPosition = sessionStorage.getItem('scrollPosition');
+        if (savedPosition) {
+            // Небольшая задержка для полной загрузки страницы
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(savedPosition));
+                // Очищаем после восстановления
+                sessionStorage.removeItem('scrollPosition');
+            }, 100);
+        }
+    });
+</script>
+
+
+    <script>
+    // ФУНКЦИЯ ДЛЯ ПЕРЕКЛЮЧЕНИЯ ТЕМЫ
+    function toggleTheme() {
+        const body = document.body;
+        const themeBtn = document.getElementById('themeToggle');
+        
+        if (body.classList.contains('light-theme')) {
+            body.classList.remove('light-theme');
+            themeBtn.innerHTML = '🌙 Тёмная тема';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.classList.add('light-theme');
+            themeBtn.innerHTML = '☀️ Светлая тема';
+            localStorage.setItem('theme', 'light');
+        }
+    }
+    
+    // ЗАГРУЗКА СОХРАНЁННОЙ ТЕМЫ
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.getElementById('themeToggle').innerHTML = '☀️ Светлая тема';
+    }
+</script>
+
+</body>
+</html>

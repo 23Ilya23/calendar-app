@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>👑 Админ-панель</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .block-form {
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .reason-input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 200px;
+        }
+        .reason-text {
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👑 Админ-панель</h1>
+            <div>
+                <span class="admin-badge">{{ username }}</span>
+                <a href="/calendar" class="logout-btn">📅 Календарь</a>
+                <a href="/logout" class="logout-btn">🚪 Выйти</a>
+            </div>
+        </div>
+
+        <!-- КНОПКИ НАВИГАЦИИ -->
+        <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 30px;">
+            <a href="/admin_zayvka" class="btn" style="background: #4a90e2; color: white; padding: 12px 30px;">📝 Управление заявками</a>
+        </div>
+
+        <!-- СТАТИСТИКА -->
+        <div class="stats">
+            <div class="stat-card"><div class="stat-number">{{ total }}</div><div>Всего пользователей</div></div>
+            <div class="stat-card"><div class="stat-number" style="color:#ffd700;">{{ blocked_students }}</div><div>Студентов заблок.</div></div>
+            <div class="stat-card"><div class="stat-number" style="color:#ffd700;">{{ blocked_teachers }}</div><div>Препод. заблок.</div></div>
+            <div class="stat-card"><div class="stat-number" style="color:#2ecc71;">{{ active }}</div><div>Активных</div></div>
+        </div>
+
+        <!-- КНОПКИ МАССОВОГО УДАЛЕНИЯ -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="/admin_delete_all_students" class="btn btn-reject" style="background: #c0392b; padding: 15px 40px; font-size: 1.2em; margin-right: 10px;" onclick="return confirm('УДАЛИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ? Это действие нельзя отменить!')">
+                ❌ УДАЛИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
+            </a>
+            <a href="/admin_delete_all_events" class="btn btn-reject" style="background: #e67e22; padding: 15px 40px; font-size: 1.2em;" onclick="return confirm('УДАЛИТЬ ВСЕ СОБЫТИЯ? Это действие нельзя отменить!')">
+                🗑️ УДАЛИТЬ ВСЕ СОБЫТИЯ
+            </a>
+        </div>
+
+        <!-- СПИСОК ВСЕХ ПОЛЬЗОВАТЕЛЕЙ -->
+        <h2>📋 Все пользователи</h2>
+        {% for user in users %}
+        <div class="student-card {% if user[7] %}blocked{% else %}active{% endif %}">
+            <h3>{{ user[4] }} {{ user[5] }}</h3>
+            <p><strong>Логин:</strong> {{ user[1] }}</p>
+            <p><strong>Email:</strong> {{ user[3] }}</p>
+            <p><strong>ID:</strong> {{ user[0] }}</p>
+            <p><strong>Роль:</strong> 
+                {% if user[6] == 'teacher' %}👨‍🏫 Преподаватель
+                {% else %}👨‍🎓 Студент
+                {% endif %}
+            </p>
+            
+            {% if user[7] and user[8] %}
+            <div class="reason-text">
+                <strong>📝 Причина:</strong> {{ user[9] }}
+            </div>
+            <div class="reason-text">
+                <strong>📝 Время:</strong> {{ user[8] }}
+            </div>
+            {% endif %}
+            
+            <div class="btn-group">
+                {% if user[7] %}
+                    <a href="/admin_unlock/{{ user[0] }}" class="btn btn-approve" onclick="return confirm('Разблокировать?')">✅ Разблокировать</a>
+                {% else %}
+                    <form method="POST" action="/admin_block/{{ user[0] }}" class="block-form" onsubmit="return confirm('Заблокировать?')">
+                        <input type="text" name="reason" placeholder="Причина блокировки" class="reason-input" required>
+                        <button type="submit" class="btn btn-reject">🔒 Заблокировать</button>
+                    </form>
+                {% endif %}
+                <a href="/admin_delete/{{ user[0] }}" class="btn btn-reject" onclick="return confirm('Удалить навсегда?')">❌ Удалить</a>
+            </div>
+        </div>
+        {% else %}
+        <p>Нет пользователей</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
