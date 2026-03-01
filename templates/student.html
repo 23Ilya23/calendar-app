@@ -8,6 +8,7 @@
             display: flex;
             gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
         .tab-btn {
             background: rgba(255,255,255,0.1);
@@ -15,6 +16,8 @@
             padding: 12px 25px;
             border-radius: 30px;
             text-decoration: none;
+            cursor: pointer;
+            border: none;
         }
         .tab-btn.active {
             background: #4a90e2;
@@ -40,11 +43,71 @@
         .badge-pending { background: #ffd700; color: black; }
         .badge-approved { background: #2ecc71; }
         .badge-rejected { background: #ff4757; }
+        .error-message {
+            background: rgba(255, 71, 87, 0.2);
+            border: 2px solid #ff4757;
+            color: #ff4757;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .calendar-btn {
+            background: #4a90e2;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .info-box {
+            background: rgba(74, 144, 226, 0.2);
+            border: 2px solid #4a90e2;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .theme-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        body.light-theme .theme-btn {
+            background: rgba(0,0,0,0.1);
+            color: #000000;
+            border: 1px solid #ccc;
+        }
+        body.light-theme .tab-btn {
+            color: #000000;
+        }
+        .auto-refresh {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid #2ecc71;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            color: #2ecc71;
+            font-size: 0.9em;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button onclick="toggleTheme()" class="theme-btn" id="themeToggle">☀️ Светлая тема</button>
+            </div>
+            
             <div class="user-info">
                 <div class="user-avatar">{{ first_name[0]|upper }}</div>
                 <div>
@@ -55,34 +118,169 @@
             <a href="/logout" class="logout-btn">🚪 Выйти</a>
         </div>
 
+        <!-- Сообщение об ошибке (если есть) -->
+        {% if request.args.get('error') %}
+        <div class="error-message">
+            {{ request.args.get('error') }}
+        </div>
+        {% endif %}
+
         {% if message %}
         <div class="success">{{ message }}</div>
         {% endif %}
 
-        <h2>📋 Мои заявки</h2>
-        {% for z in zayvki %}
-        <div class="zayvka-card status-{{ z[11] }}">
-            <span class="status-badge badge-{{ z[11] }}">
-                {% if z[11] == 'pending' %}⏳ Ожидает
-                {% elif z[11] == 'approved' %}✅ Одобрена
-                {% elif z[11] == 'rejected' %}❌ Отклонена
-                {% endif %}
-
-
-            </span>
-                    <div style="margin-top:10px;">
-                <strong> ID: {{ z[1] }}</strong>
-            </div>
-
-
-            <div style="margin-top:10px;">
-                <strong>{{ z[9] }}</strong> - {{ z[7] }} {{ z[8] }} 
-            </div>
-            <small>Создано: {{ z[12] }}</small>
+        <!-- Индикатор автоматического обновления -->
+        <div class="auto-refresh" id="autoRefreshMsg">
+            🔄 Автоматически перенаправим в календарь, когда заявка будет принята...
         </div>
-        {% else %}
-        <p>У вас нет заявок</p>
-        {% endfor %}
+
+        <!-- Кнопка перехода в календарь (только если есть одобренные) -->
+        {% if has_events %}
+        <div class="info-box">
+            <h3>🎉 У вас есть одобренные события!</h3>
+            <p>Всего событий в календаре: <strong>{{ approved_count }}</strong></p>
+            <a href="{{ url_for('calendar_page') }}" class="calendar-btn">📅 Перейти в календарь</a>
+        </div>
+        {% endif %}
+
+
+        <div id="zayvki-list">
+            {% for z in zayvki %}
+            <div class="zayvka-card status-{{ z[11] }}" data-status="{{ z[11] }}">
+                <span class="status-badge badge-{{ z[11] }}">
+                    {% if z[11] == 'pending' %}⏳ Ожидает
+                    {% elif z[11] == 'approved' %}✅ В календаре
+                    {% elif z[11] == 'rejected' %}❌ Отклонена
+                    {% endif %}
+                </span>
+                
+                <div style="margin-top:10px;">
+                    <strong>📅 Дата:</strong> {{ z[7] }} {{ z[8] }}
+                </div>
+                
+                <div style="margin-top:5px;">
+                    <strong>📝 Событие:</strong> {{ z[9] }}
+                </div>
+                
+                {% if z[10] %}
+                <div style="margin-top:5px; color:#666;">
+                    <small>{{ z[10] }}</small>
+                </div>
+                {% endif %}
+                
+                <div style="margin-top:10px;">
+                    <small>ID заявки: {{ z[0] }} | Создано: {{ z[12] }}</small>
+                </div>
+                
+                {% if z[11] == 'approved' %}
+                <div style="margin-top:10px; color:#2ecc71;">
+                    ✅ Это событие НАВСЕГДА в календаре!
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p>У вас нет заявок</p>
+            {% endfor %}
+        </div>
     </div>
+
+    <script>
+        function filterAll() {
+            document.querySelectorAll('.zayvka-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            updateActiveTab('Все');
+        }
+        
+        function filterPending() {
+            document.querySelectorAll('.zayvka-card').forEach(card => {
+                card.style.display = card.dataset.status === 'pending' ? 'block' : 'none';
+            });
+            updateActiveTab('Ожидают');
+        }
+        
+        function filterApproved() {
+            document.querySelectorAll('.zayvka-card').forEach(card => {
+                card.style.display = card.dataset.status === 'approved' ? 'block' : 'none';
+            });
+            updateActiveTab('В календаре');
+        }
+        
+        function filterRejected() {
+            document.querySelectorAll('.zayvka-card').forEach(card => {
+                card.style.display = card.dataset.status === 'rejected' ? 'block' : 'none';
+            });
+            updateActiveTab('Отклонены');
+        }
+        
+        function updateActiveTab(text) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.textContent.includes(text)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Функция проверки статуса заявки
+        function checkZayvkaStatus() {
+            fetch('/check_status_zayvka')
+                .then(response => response.json())
+                .then(data => {
+                    const msgDiv = document.getElementById('autoRefreshMsg');
+                    if (data.is_zayvka === 'true') {
+                        msgDiv.innerHTML = '✅ Заявка принята! Перенаправляем в календарь...';
+                        msgDiv.style.background = 'rgba(46, 204, 113, 0.2)';
+                        window.location.href = '/calendar';
+                    } else {
+                        const now = new Date();
+                        msgDiv.innerHTML = `🔄 Проверка: ${now.toLocaleTimeString()} — ожидаем принятия заявки...`;
+                    }
+                })
+                .catch(err => {
+                    console.log('Ошибка проверки статуса:', err);
+                    document.getElementById('autoRefreshMsg').innerHTML = '❌ Ошибка соединения';
+                });
+        }
+
+        // Проверяем статус каждые 500ms
+        setInterval(checkZayvkaStatus, 500);
+        checkZayvkaStatus();
+
+        // Функция для переключения темы
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('themeToggle');
+            
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                themeBtn.innerHTML = '☀️ Светлая тема';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                themeBtn.innerHTML = '🌙 Тёмная тема';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Загрузка сохранённой темы
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeBtn = document.getElementById('themeToggle');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+                if (themeBtn) themeBtn.innerHTML = '🌙 Тёмная тема';
+            } else {
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+                if (themeBtn) themeBtn.innerHTML = '☀️ Светлая тема';
+            }
+        });
+    </script>
+
 </body>
 </html>

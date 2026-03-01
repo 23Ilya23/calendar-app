@@ -28,36 +28,57 @@
             50% { opacity: 1; }
             100% { opacity: 0.6; }
         }
+        .theme-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        body.light-theme .theme-btn {
+            background: rgba(0,0,0,0.1);
+            color: #000000;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
-    <div class="container" style="text-align:center;">
-        <h1 style="color:#ff4757;">🔒 Аккаунт заблокирован</h1>
-        
-        <div class="id">{{ user_id }}</div>
-        
-        {% if block_reason %}
-        <div class="reason-box">
-            <strong>📝 Причина блокировки:</strong>
-            <p style="margin-top:10px;">{{ block_reason }}</p>
-        </div>
-        {% endif %}
-        
-        <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; margin:20px 0; text-align:left;">
-            <p><strong>👤 Имя:</strong> {{ first_name }} {{ last_name }}</p>
-            <p><strong>👤 Логин:</strong> {{ username }}</p>
-            <p><strong>📧 Email:</strong> {{ email }}</p>
+    <div class="container">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+            <button onclick="toggleTheme()" class="theme-btn" id="themeToggle">☀️ Светлая тема</button>
         </div>
         
-        <div class="status-message checking" id="statusMessage">
-            🔍 Проверяю статус блокировки...
+        <div style="text-align:center;">
+            <h1 style="color:#ff4757;">🔒 Аккаунт заблокирован</h1>
+            
+            <div class="id">{{ user_id }}</div>
+            
+            {% if block_reason %}
+            <div class="reason-box">
+                <strong>📝 Причина блокировки:</strong>
+                <p style="margin-top:10px;">{{ block_reason }}</p>
+            </div>
+            {% endif %}
+            
+            <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:15px; margin:20px 0; text-align:left;">
+                <p><strong>👤 Имя:</strong> {{ first_name }} {{ last_name }}</p>
+                <p><strong>👤 Логин:</strong> {{ username }}</p>
+                <p><strong>📧 Email:</strong> {{ email }}</p>
+            </div>
+            
+            <div class="status-message checking" id="statusMessage">
+                🔍 Проверяю статус блокировки...
+            </div>
+            
+            <p>Как только администратор разблокирует вас — вы автоматически попадёте в календарь.</p>
+            
+            <a href="/logout" class="btn" style="background:#ff4757; color:white; padding:12px 30px; border-radius:30px; text-decoration:none; display:inline-block; margin-top:20px;">
+                🚪 Выйти
+            </a>
         </div>
-        
-        <p>Как только администратор разблокирует вас — вы автоматически попадёте в календарь.</p>
-        
-        <a href="/logout" class="btn" style="background:#ff4757; color:white; padding:12px 30px; border-radius:30px; text-decoration:none; display:inline-block; margin-top:20px;">
-            🚪 Выйти
-        </a>
     </div>
 
     <script>
@@ -89,6 +110,40 @@
         
         setInterval(checkStatus, 3000);
         checkStatus();
+
+        // Функция для переключения темы
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('themeToggle');
+            
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                themeBtn.innerHTML = '☀️ Светлая тема';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                themeBtn.innerHTML = '🌙 Тёмная тема';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        // Загрузка сохранённой темы
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeBtn = document.getElementById('themeToggle');
+            
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+                if (themeBtn) themeBtn.innerHTML = '🌙 Тёмная тема';
+            } else {
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+                if (themeBtn) themeBtn.innerHTML = '☀️ Светлая тема';
+            }
+        });
     </script>
 </body>
 </html>
