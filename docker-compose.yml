@@ -22,7 +22,11 @@ services:
       PGADMIN_DEFAULT_PASSWORD: privetilya
       PGADMIN_LISTEN_PORT: 80
     ports:
+<<<<<<< HEAD
       - "80:80"
+=======
+      - "5050:80"
+>>>>>>> 49c288b458f78d2b05d79e3c620e2009922d50f2
     depends_on:
       - postgres
 
@@ -44,5 +48,9 @@ services:
       - postgres
 
 volumes:
+<<<<<<< HEAD
   postgres_data:
                                                                          
+=======
+  postgres_data:
+>>>>>>> 49c288b458f78d2b05d79e3c620e2009922d50f2

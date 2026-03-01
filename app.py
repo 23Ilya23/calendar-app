@@ -195,6 +195,7 @@ def index():
         return redirect(url_for('student_page'))
     return redirect(url_for('login'))
 
+<<<<<<< HEAD
 @app.route('/check_status_zayvka', methods=['GET'])
 def check_status_zayvka():
     """
@@ -234,6 +235,23 @@ def check_status_zayvka():
 
 
 
+=======
+@app.route('/check_status_zayvka')
+def check_status_zayvka():
+    if 'user_id' not in session:
+        return {'is_zayvka': 'false', 'logged_in': False}
+    
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT is_zayvka FROM users WHERE id = %s", (session['user_id'],))
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    if result:
+        return {'is_zayvka': result[0]}  # должно возвращать 'true' или 'false'
+    return {'is_zayvka': 'false'}
+>>>>>>> 49c288b458f78d2b05d79e3c620e2009922d50f2
 
 @app.route('/check_status')
 def check_status():
@@ -687,8 +705,13 @@ def api_user_status():
         
         return jsonify({
             'success': True,
+<<<<<<< HEAD
             'is_blocked': user[7],  # поле is_blocked
             'is_zayvka': user[9],   # поле is_zayvka
+=======
+            'is_blocked': user[7],
+            'is_zayvka': user[9],
+>>>>>>> 49c288b458f78d2b05d79e3c620e2009922d50f2
             'role': user[6]
         }), 200
         
@@ -1471,6 +1494,7 @@ def api_calendar():
 
 
 @app.route('/api/zayvka', methods=['GET'])
+<<<<<<< HEAD
 def api_zayvka():
     """
     API для получения заявок (доступно всем авторизованным пользователям)
@@ -1534,6 +1558,36 @@ def api_zayvka():
     
 
 
+=======
+@admin_required
+def api_zayvka():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM zayvka ORDER BY created_at DESC")
+    zayvki = cur.fetchall()
+    cur.close()
+    conn.close()
+    
+    result = []
+    for z in zayvki:
+        result.append({
+            'id': z[0],
+            'user_id': z[1],
+            'username': z[2],
+            'first_name': z[3],
+            'last_name': z[4],
+            'email': z[5],
+            'user_role': z[6],
+            'event_date': str(z[7]),
+            'event_time': z[8],
+            'title': z[9],
+            'description': z[10],
+            'status': z[11],
+            'created_at': str(z[12])
+        })
+    
+    return {'success': True, 'count': len(result), 'zayvki': result}
+>>>>>>> 49c288b458f78d2b05d79e3c620e2009922d50f2
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 @admin_required
