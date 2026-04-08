@@ -1,0 +1,48 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: calendar_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: privetilya
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "80:80"
+    depends_on:
+      - postgres
+
+  calendar:
+    image: python:3.9-slim
+    container_name: calendar_app
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app.py:/app.py
+      - ./templates:/templates
+      - ./static:/static
+    working_dir: /
+    command: >
+      sh -c "pip install flask psycopg2-binary &&
+             python app.py"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+                                                                         
